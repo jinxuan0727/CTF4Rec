@@ -1,2 +1,2 @@
 # CTF4Rec
-Our code will be made public after the paper is received.
+Our code will be available after the paper is received.
