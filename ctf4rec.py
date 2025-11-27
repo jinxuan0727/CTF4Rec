@@ -38,14 +38,14 @@ def graph_dual_neighbor_readout(g: dgl.DGLGraph, aug_g: dgl.DGLGraph, node_ids, 
                      for t in all_neighbors.split(all_nbr_num.tolist())]
     foreign_neighbors = [set(t.tolist())
                          for t in foreign_neighbors.split(for_nbr_num.tolist())]
-    # sample foreign neighbors
+    
     for i, nbrs in enumerate(foreign_neighbors):
         if len(nbrs) > 10:
             nbrs = random.sample(nbrs, 10)
             foreign_neighbors[i] = set(nbrs)
     civil_neighbors = [all_neighbors[i]-foreign_neighbors[i]
                        for i in range(len(all_neighbors))]
-    # sample civil neighbors
+    
     for i, nbrs in enumerate(civil_neighbors):
         if len(nbrs) > 10:
             nbrs = random.sample(nbrs, 10)
@@ -61,7 +61,7 @@ def graph_dual_neighbor_readout(g: dgl.DGLGraph, aug_g: dgl.DGLGraph, node_ids, 
         [torch.tensor(list(s), dtype=torch.long) for s in civil_neighbors])
     cv_feats = features[civil_neighbors].split(cv_lens)
     cv_feats = [t.mean(dim=0) for t in cv_feats]
-    # insert zero vector for zero-length neighbors
+    
     if len(zero_indicies) > 0:
         for i in zero_indicies:
             cv_feats.insert(i, torch.zeros_like(features[0]))
@@ -150,7 +150,7 @@ class CTF4Rec(SequentialRecommender):
         self.loss_type = config['loss_type']
         self.initializer_range = config['initializer_range']
 
-        # CLF4Rec
+        
         self.batch_size = config['train_batch_size']
         self.lmd = config['lmd']
         self.lmd_tf = config['lmd_tf']
@@ -166,8 +166,7 @@ class CTF4Rec(SequentialRecommender):
         self.tao_f = config['tao_f']
         self.tao_t = config['tao_t']
 
-        # load dataset info
-        # define layers and loss
+        
         self.item_embedding = nn.Embedding(self.n_items + 1, self.hidden_size, padding_idx=0)  # mask token add 1
         self.item_mean_embedding = nn.Embedding(self.n_items + 1, self.hidden_size, padding_idx=0)
         self.item_cov_embedding = nn.Embedding(self.n_items + 1, self.hidden_size, padding_idx=0)
@@ -207,21 +206,21 @@ class CTF4Rec(SequentialRecommender):
             layer_norm_eps=self.layer_norm_eps,
             config=self.config,
         )
-        # CLF4Rec
+        
         self.fft_layer = BandedFourierLayer(self.hidden_size, self.hidden_size, 0, 1, length=self.max_seq_length)
         self.LayerNorm = nn.LayerNorm(self.hidden_size, eps=self.layer_norm_eps)
         self.dropout = nn.Dropout(self.hidden_dropout_prob)
 
-        # Contrastive Learning
+        
         self.contrastive_learning_layer = CLLayer(self.hidden_size, tau=config['cl_temp'])
 
-        # Fusion Attn
+        
         self.attn_weights = nn.Parameter(torch.Tensor(self.hidden_size, self.hidden_size))
         self.attn = nn.Parameter(torch.Tensor(1, self.hidden_size))
         nn.init.normal_(self.attn, std=0.02)
         nn.init.normal_(self.attn_weights, std=0.02)
 
-        # Global Graph Learning
+        
         self.item_adjgraph = external_data["adj_graph"].to(self.device)
         self.user_edges = external_data["user_edges"]
         self.item_simgraph = external_data["sim_graph"].to(self.device)
@@ -236,7 +235,7 @@ class CTF4Rec(SequentialRecommender):
 
         self.loss_fct = nn.CrossEntropyLoss()
 
-        # we only need compute the loss at the masked position
+        
         try:
             assert self.loss_type in ['CE']
         except AssertionError:
